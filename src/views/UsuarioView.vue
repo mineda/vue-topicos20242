@@ -8,6 +8,7 @@
         <div v-else>Senha ok</div>
         <button @click='adicionarUsuario'>Incluir</button>
         <button @click='buscarUsuarios'>Atualizar</button>
+        <p v-if='erro'>{{ erro }}</p>
         <table>
             <thead>
                 <th>Id</th>
@@ -26,25 +27,45 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
+import { onMounted } from 'vue';
 
-const usuario = ref({ id: 3, nome: 'teste', senha: '123'});
+const usuario = ref({ nome: 'teste', senha: '123'});
 const id = ref(3);
 
 const usuarios = ref([{ id: 1, nome: 'teste', senha: '123'},
         { id: 2, nome: 'teste2', senha: '123'}
     ]);
 
+const erro = ref<string>();
+
 function senhaMudou(event: any) {
     usuario.value.senha = event.target.value;
 }
 
 async function buscarUsuarios() {
-    usuarios.value = ( await axios.get('https://8080-mineda-springtopicos202-v6q06tntvms.ws-us116.gitpod.io/usuario')).data;
+    try {
+        usuarios.value = ( await axios.get('usuario')).data;
+        erro.value = '';
+    }
+    catch(ex) {
+        erro.value = (ex as Error).message;
+    }
 }
 
-function adicionarUsuario() {
-    usuarios.value.push(usuario.value);
-    usuario.value = {id: id.value++, nome: '', senha: ''};
+async function adicionarUsuario() {
+    try {
+        await axios.post('usuario', usuario.value);
+        buscarUsuarios();
+        erro.value = ''; 
+    }
+    catch(ex) {
+        erro.value = (ex as Error).message;
+    }
+   
 }
+
+onMounted(() => {
+    buscarUsuarios();
+});
 
 </script>
